@@ -137,6 +137,9 @@ case "$LINUX_ARCH" in
     microblaze)
         LINUX_DEFCONFIG=mmu_defconfig
 	;;
+    s390x*)
+	LINUX_ARCH=s390x
+	;;
 esac
 export LINUX_ARCH
 
@@ -195,8 +198,17 @@ fetchextract() {
 gitfetchextract() {
     if [ ! -e "$MUSL_CC_BASE/tarballs/$3".tar.gz ]
     then
-        git archive --format=tar --remote="$1" "$2" | \
-            gzip -c > "$MUSL_CC_BASE/tarballs/$3".tar.gz || die "Failed to fetch $3-$2"
+	if [ "$ARCH" == "s390x" ]
+	then
+	    git clone "$1" -b "$2" "$3" || die "Failed to fetch $1 -b $2"
+	    tar -zcvf  "$3".tar.gz  "$3"
+	    #tar -cvf "$3".tar "$3" && gzip -c  "$3".tar >  "$3".tar.gz
+	    mv "$3".tar.gz "$MUSL_CC_BASE/tarballs/$3".tar.gz
+	    mv "$3" "$3".no-need
+	else
+	    git archive --format=tar --remote="$1" "$2" | \
+		gzip -c > "$MUSL_CC_BASE/tarballs/$3".tar.gz || die "Failed to fetch $3-$2"
+	fi
     fi
     if [ ! -e "$3/extracted" ]
     then

@@ -123,10 +123,13 @@ then
     PREFIX="$CC_PREFIX"
 
     # if it didn't build libc.so, disable dynamic linking
-    if [ ! -e "$CC_PREFIX/$TRIPLE/lib/libc.so" ]
-    then
-        GCC_CONFFLAGS="--disable-shared $GCC_CONFFLAGS"
-    fi
+    #if [ ! -e "$CC_PREFIX/$TRIPLE/lib/libc.so" ]
+    #then
+    #    GCC_CONFFLAGS="--disable-shared $GCC_CONFFLAGS"
+    #fi
+
+    # YES, we disable dynamic linking now
+    GCC_CONFFLAGS="--disable-shared $GCC_CONFFLAGS"
 
     # gcc 2
     buildinstall 2 gcc-$GCC_VERSION --target=$TRIPLE $SYSROOT_FLAGS \
