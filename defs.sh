@@ -198,7 +198,7 @@ fetchextract() {
 gitfetchextract() {
     if [ ! -e "$MUSL_CC_BASE/tarballs/$3".tar.gz ]
     then
-	if [ "$ARCH" == "s390x" ]
+	if [ "$ARCH" = "s390x" ]
 	then
 	    git clone "$1" -b "$2" "$3" || die "Failed to fetch $1 -b $2"
 	    tar -zcvf  "$3".tar.gz  "$3"
