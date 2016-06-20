@@ -90,6 +90,12 @@ export CFLAGS="$SAVE_CFLAGS"
 export CXXFLAGS="$SAVE_CXXFLAGS"
 
 # linux headers
+# linux kernel uses s390 as an unified term for s390 & s390x
+if [ "$ARCH" = "s390x" ]
+then
+    export ARCH=s390
+    export LINUX_ARCH="$ARCH"
+fi
 fetchextract $LINUX_HEADERS_URL
 LINUX_HEADERS_DIR=$(stripfileext $(basename $LINUX_HEADERS_URL))
 
@@ -109,6 +115,10 @@ then
     touch installedheaders
     )
 fi
+
+# restore to s390x
+export ARCH=s390x
+export LINUX_ARCH="$ARCH"
 
 if [ "$MUSL_VERSION" != "no" ]
 then

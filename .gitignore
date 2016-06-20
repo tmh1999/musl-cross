@@ -1,5 +1,9 @@
 tarballs/
 kernel-headers-3.12.6-5/
-gcc-5.3.0/
+linux-*/
+gcc-5.3.0*/
+gcc-5.2.0*/
 musl-1.1.12/
-binutils-2.25.1/
+musl-s390*/
+binutils-2.25.1*/
+busybox*/

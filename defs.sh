@@ -13,6 +13,16 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 # OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
+contains() {
+    string="$1"
+    substring="$2"
+    if test "${string#*$substring}" != "$string"
+    then
+	return 0
+    else
+	return 1
+    fi
+}
 
 ORIGPWD="$PWD"
 cd "$MUSL_CC_BASE"
@@ -201,8 +211,7 @@ gitfetchextract() {
 	if [ "$ARCH" = "s390x" ]
 	then
 	    git clone "$1" -b "$2" "$3" || die "Failed to fetch $1 -b $2"
-	    tar -zcvf  "$3".tar.gz  "$3"
-	    #tar -cvf "$3".tar "$3" && gzip -c  "$3".tar >  "$3".tar.gz
+	    cd "$3" && tar -zcvf ../"$3".tar.gz . && cd ..
 	    mv "$3".tar.gz "$MUSL_CC_BASE/tarballs/$3".tar.gz
 	    mv "$3" "$3".no-need
 	else
@@ -266,15 +275,35 @@ patch_source() {
     )
 }
 
+patch_gcc_s390x() {
+    BD="$1"
+    patch="$MUSL_CC_BASE/patches/$2"
+
+    (
+    cd "$BD" || die "Failed to cd $BD"
+    if [ ! -e patched.s390x ]
+    then
+	patch -p1 < "$patch"
+	touch patched.s390x
+    fi
+    )
+}
+
 build() {
     BP="$1"
     BD="$2"
     CF="./configure"
     BUILT="$PWD/$BD/built$BP"
+    ! contains "$2" "musl" || is_musl=1
+    ! contains "$2" "gcc" || is_gcc=1
     shift; shift
 
     if [ ! -e "$BUILT" ]
     then
+	if [ "$is_gcc" = 1 ] && [ "$ARCH" = "s390x" ]
+	then
+	    patch_gcc_s390x "$BD" "s390x.patch"
+	fi
         patch_source "$BD"
 
         (
@@ -282,10 +311,16 @@ build() {
 
         if [ "$BP" ]
         then
-            mkdir -p build"$BP"
-            cd build"$BP" || die "Failed to cd to build dir for $BD $BP"
-            CF="../configure"
+	    # better have separated build directory rather than in same or sub-dir of source dir
+            mkdir -p ../"$BD"-build"$BP"
+            cd ../"$BD"-build"$BP" || die "Failed to cd to build dir for $BD $BP"
+            CF="../$BD/configure"
         fi
+	if [ "$is_musl" = 1 ] && [ "$ARCH" = "s390x" ]
+	then
+	    # for now, we disable musl dynamic linking on s390x
+	    CF="$CF --disable-shared"
+	fi
         ( $CF --prefix="$PREFIX" "$@" &&
             $MAKE $MAKEFLAGS &&
             touch "$BUILT" ) ||
@@ -328,7 +363,7 @@ doinstall() {
 
         if [ "$BP" ]
         then
-            cd build"$BP" || die "Failed to cd build$BP"
+            cd ../"$BD"-build"$BP" || die "Failed to cd build$BP"
         fi
 
         ( $MAKE install "$@" $MAKEINSTALLFLAGS &&
