@@ -294,6 +294,8 @@ build() {
     BD="$2"
     CF="./configure"
     BUILT="$PWD/$BD/built$BP"
+    is_musl=0
+    is_gcc=0
     ! contains "$2" "musl" || is_musl=1
     ! contains "$2" "gcc" || is_gcc=1
     shift; shift
